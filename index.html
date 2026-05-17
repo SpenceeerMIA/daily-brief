@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日热点 · Daily Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1814; --ink-2: #3d3a35; --ink-3: #7a766e; --ink-4: #b5b0a8;
+    --paper: #f7f4ee; --paper-2: #ede9e0; --paper-3: #e2ddd3;
+    --accent: #c0392b; --accent-2: #e74c3c;
+    --gold: #b8860b; --blue: #1a3a5c; --green: #1e4d2b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: 'Noto Sans SC', sans-serif; font-weight: 300;
+    min-height: 100vh; position: relative;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(0,0,0,0.03) 28px, rgba(0,0,0,0.03) 29px);
+    pointer-events: none; z-index: 0;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+  .masthead { border-bottom: 3px double var(--ink); padding: 24px 0 12px; text-align: center; }
+  .masthead-top {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-3); margin-bottom: 12px;
+  }
+  .paper-name { font-family: 'Noto Serif SC', serif; font-size: 48px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+  .paper-tagline { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-3); letter-spacing: 0.15em; margin-top: 6px; text-transform: uppercase; }
+  .masthead-border {
+    border-top: 1px solid var(--ink); margin-top: 12px; padding-top: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.1em;
+  }
+  .masthead-border span { opacity: 0.4; }
+
+  /* SETUP BAR */
+  .setup-bar { background: var(--ink); color: var(--paper); padding: 10px 24px; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .setup-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 3px 0; }
+  .setup-row label { color: var(--ink-4); white-space: nowrap; font-size: 10px; letter-spacing: 0.05em; }
+  .setup-row input {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: var(--paper); padding: 4px 10px; font-family: 'DM Mono', monospace;
+    font-size: 11px; border-radius: 2px; outline: none; height: 26px;
+  }
+  .setup-row input:focus { border-color: rgba(255,255,255,0.4); }
+  .setup-row input::placeholder { color: rgba(255,255,255,0.25); }
+  .setup-row input.key-input { flex: 1; min-width: 200px; }
+  .setup-row input.model-input { width: 240px; }
+  .provider-tabs { display: flex; border: 1px solid rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
+  .provider-tab {
+    font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 12px;
+    background: transparent; color: var(--ink-4); border: none; cursor: pointer;
+    letter-spacing: 0.05em; transition: all 0.15s;
+  }
+  .provider-tab:hover { color: var(--paper); }
+  .provider-tab.active { background: rgba(255,255,255,0.12); color: var(--paper); }
+  .save-btn {
+    background: var(--accent); color: white; border: none; padding: 4px 12px;
+    font-family: 'DM Mono', monospace; font-size: 10px; cursor: pointer;
+    border-radius: 2px; letter-spacing: 0.05em; white-space: nowrap; height: 26px;
+  }
+  .save-btn:hover { background: var(--accent-2); }
+  .key-status { font-size: 10px; white-space: nowrap; }
+  .key-status.ok { color: #2ecc71; }
+
+  /* TOOLBAR */
+  .toolbar { padding: 14px 0; border-bottom: 1px solid var(--ink-4); display: flex; align-items: center; flex-wrap: wrap; }
+  .cat-tabs { display: flex; flex: 1; flex-wrap: wrap; }
+  .cat-tab {
+    font-family: 'Noto Serif SC', serif; font-size: 13px; font-weight: 600;
+    padding: 6px 16px; border: 1px solid transparent; background: none;
+    color: var(--ink-3); cursor: pointer; letter-spacing: 0.02em;
+    transition: all 0.15s; position: relative;
+  }
+  .cat-tab::after {
+    content: '·'; position: absolute; right: -1px; color: var(--ink-4);
+    font-size: 18px; line-height: 1; top: 50%; transform: translateY(-55%);
+  }
+  .cat-tab:last-child::after { display: none; }
+  .cat-tab:hover:not(:disabled) { color: var(--ink); }
+  .cat-tab:disabled { color: var(--ink-4); cursor: not-allowed; }
+  .cat-tab.active { color: var(--ink); border-bottom: 2px solid var(--ink); }
+
+  /* MAIN */
+  .main { padding: 24px 0; }
+  .date-line {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-4);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .date-line::after { content: ''; flex: 1; height: 1px; background: var(--ink-4); opacity: 0.4; }
+  .empty-state { text-align: center; padding: 60px 24px; color: var(--ink-3); }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+  .empty-state h3 { font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; line-height: 1.7; }
+
+  @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
+  .skeleton-bg {
+    background: linear-gradient(90deg, var(--paper-2) 25%, var(--paper-3) 50%, var(--paper-2) 75%);
+    background-size: 600px 100%; animation: shimmer 1.4s infinite; border-radius: 2px;
+  }
+  .skel-card { padding: 20px 0; border-bottom: 1px solid var(--paper-3); }
+  .skel-tag { height: 11px; width: 60px; margin-bottom: 10px; }
+  .skel-h { height: 22px; margin-bottom: 8px; }
+  .skel-p { height: 13px; margin-bottom: 6px; }
+
+  .news-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .news-card { padding: 20px; border: 0.5px solid var(--paper-3); position: relative; transition: background 0.15s; }
+  .news-card:hover { background: rgba(0,0,0,0.02); }
+  .news-card.lead {
+    grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; border-top: 3px solid var(--ink); align-items: start;
+  }
+  .card-tag {
+    display: inline-block; font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; margin-bottom: 10px; font-weight: 500;
+  }
+  .tag-综合 { background: var(--ink); color: var(--paper); }
+  .tag-科技 { background: var(--blue); color: #e8f0f8; }
+  .tag-财经 { background: var(--gold); color: #fff8e0; }
+  .tag-国际 { background: var(--ink-2); color: var(--paper); }
+  .tag-社会 { background: var(--green); color: #e8f5ec; }
+  .card-title { font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 700; line-height: 1.4; color: var(--ink); margin-bottom: 10px; }
+  .news-card.lead .card-title { font-size: 24px; line-height: 1.3; }
+  .card-summary { font-size: 13px; line-height: 1.8; color: var(--ink-2); }
+  .card-footer { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--paper-3); display: flex; align-items: center; justify-content: space-between; }
+  .card-time { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink-4); letter-spacing: 0.05em; }
+  .read-more {
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent);
+    cursor: pointer; letter-spacing: 0.05em; background: none; border: none;
+    padding: 0; text-transform: uppercase; text-decoration: none;
+  }
+  .read-more:hover { color: var(--accent-2); text-decoration: underline; }
+
+  .status-bar { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-3); padding: 8px 0 16px; display: flex; align-items: center; gap: 8px; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .blink-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s ease-in-out infinite; display: inline-block; }
+
+  footer {
+    border-top: 3px double var(--ink); padding: 16px 0; margin-top: 40px;
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink-4);
+    text-align: center; letter-spacing: 0.08em; text-transform: uppercase; position: relative; z-index: 1;
+  }
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--paper);
+    padding: 10px 18px; font-family: 'DM Mono', monospace; font-size: 12px; border-radius: 2px;
+    z-index: 9999; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 600px) {
+    .paper-name { font-size: 32px; }
+    .news-grid { grid-template-columns: 1fr; }
+    .news-card.lead { grid-template-columns: 1fr; }
+    .cat-tab { padding: 6px 10px; font-size: 12px; }
+    .setup-row input.key-input { min-width: 140px; }
+    .setup-row input.model-input { width: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="masthead">
+    <div class="masthead-top">
+      <span id="todayDate">载入中…</span>
+      <span>AI POWERED · 实时聚合</span>
+      <span>每日热点</span>
+    </div>
+    <div class="paper-name">每日热点</div>
+    <div class="paper-tagline">Daily Brief</div>
+    <div class="masthead-border">
+      <span>综合</span> · <span>科技</span> · <span>财经</span> · <span>国际</span> · <span>社会</span>
+    </div>
+  </div>
+</div>
+
+<div class="setup-bar">
+  <div class="setup-row">
+    <div class="provider-tabs">
+      <button class="provider-tab active" data-provider="deepseek" onclick="switchProvider('deepseek')">DeepSeek</button>
+      <button class="provider-tab" data-provider="openrouter" onclick="switchProvider('openrouter')">OpenRouter</button>
+    </div>
+    <label id="llmKeyLabel">LLM KEY</label>
+    <input type="password" id="apiKeyInput" class="key-input" placeholder="sk-..." />
+    <button class="save-btn" onclick="saveLLMKey()">保存</button>
+    <span class="key-status" id="keyStatus"></span>
+    <label id="modelLabel" style="display:none;">Model</label>
+    <input type="text" id="modelInput" class="model-input" style="display:none;" value="anthropic/claude-sonnet-4-20250514" placeholder="模型 ID" />
+  </div>
+</div>
+
+<div class="container">
+  <div class="toolbar">
+    <div class="cat-tabs">
+      <button class="cat-tab active" data-cat="综合" onclick="selectCat(this)">综合</button>
+      <button class="cat-tab" data-cat="科技" onclick="selectCat(this)">科技</button>
+      <button class="cat-tab" data-cat="财经" onclick="selectCat(this)">财经</button>
+      <button class="cat-tab" data-cat="国际" onclick="selectCat(this)">国际</button>
+      <button class="cat-tab" data-cat="社会" onclick="selectCat(this)">社会</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="date-line" id="dateLine">等待获取</div>
+    <div id="statusBar" class="status-bar" style="display:none;"></div>
+    <div id="newsContainer">
+      <div class="empty-state">
+        <div class="empty-icon">📰</div>
+        <h3>今日热点待载入</h3>
+        <p>输入 API Key 后点击上方分类按钮即可获取</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    每日热点 · Daily Brief &nbsp;|&nbsp; 数据来源: Google News + AI 整理 &nbsp;|&nbsp;
+    <span id="footerYear"></span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───
+let currentCat = '综合';
+let provider = localStorage.getItem('dn_provider') || 'deepseek';
+let llmApiKey = localStorage.getItem('dn_llm_key') || '';
+let openRouterModel = localStorage.getItem('dn_or_model') || 'anthropic/claude-sonnet-4-20250514';
+let isFetching = false;
+
+// 关键词映射
+const RSS_QUERIES = {
+  '综合': 'world news today breaking',
+  '科技': 'technology AI artificial intelligence',
+  '财经': 'global economy markets finance',
+  '国际': 'international diplomacy geopolitics',
+  '社会': 'China society culture trending'
+};
+
+// ─── INIT ───
+(function init() {
+  const now = new Date();
+  document.getElementById('todayDate').textContent =
+    now.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  document.getElementById('dateLine').textContent =
+    now.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric' }) + ' 热点';
+  document.getElementById('footerYear').textContent = now.getFullYear();
+  if (llmApiKey) { document.getElementById('apiKeyInput').value = llmApiKey; setKeyStatus(true); }
+  document.querySelectorAll('.provider-tab').forEach(t => t.classList.toggle('active', t.dataset.provider === provider));
+  updateProviderUI();
+  document.getElementById('modelInput')?.addEventListener('change', e => {
+    openRouterModel = e.target.value.trim() || 'anthropic/claude-sonnet-4-20250514';
+    localStorage.setItem('dn_or_model', openRouterModel);
+  });
+})();
+
+// ─── PROVIDER ───
+function switchProvider(p) {
+  provider = p;
+  localStorage.setItem('dn_provider', p);
+  document.querySelectorAll('.provider-tab').forEach(t => t.classList.toggle('active', t.dataset.provider === p));
+  updateProviderUI();
+  setKeyStatus(!!llmApiKey);
+}
+function updateProviderUI() {
+  const isOR = provider === 'openrouter';
+  document.getElementById('modelLabel').style.display = isOR ? '' : 'none';
+  document.getElementById('modelInput').style.display = isOR ? '' : 'none';
+  document.getElementById('modelInput').value = openRouterModel;
+  document.getElementById('llmKeyLabel').textContent = isOR ? 'OPENROUTER KEY' : 'DEEPSEEK KEY';
+  document.getElementById('apiKeyInput').placeholder = isOR ? 'sk-or-...' : 'sk-...';
+}
+function saveLLMKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val) { showToast('请输入 API Key'); return; }
+  llmApiKey = val;
+  localStorage.setItem('dn_llm_key', llmApiKey);
+  setKeyStatus(true);
+  showToast('API Key 已保存');
+}
+function setKeyStatus(ok) {
+  const el = document.getElementById('keyStatus');
+  el.textContent = ok ? '✓ 已保存' : '';
+  el.className = ok ? 'key-status ok' : 'key-status';
+}
+
+// ─── CATEGORY ───
+function selectCat(el) {
+  if (isFetching) return;
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentCat = el.dataset.cat;
+  fetchNews();
+}
+
+// ─── LLM ───
+function getLLMConfig() {
+  return provider === 'deepseek'
+    ? { url: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-chat', key: llmApiKey }
+    : { url: 'https://openrouter.ai/api/v1/chat/completions', model: openRouterModel, key: llmApiKey };
+}
+async function callLLM(messages, maxTokens) {
+  const cfg = getLLMConfig();
+  const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key };
+  if (provider === 'openrouter') { headers['HTTP-Referer'] = window.location.origin; headers['X-Title'] = 'Daily News'; }
+  const resp = await fetch(cfg.url, {
+    method: 'POST', headers,
+    body: JSON.stringify({ model: cfg.model, messages, max_tokens: maxTokens || 1500, temperature: 0.3 })
+  });
+  if (!resp.ok) {
+    let msg = '请求失败 (' + resp.status + ')';
+    try { const e = await resp.json(); msg = e.error?.message || e.error || msg; } catch(_) {}
+    if (resp.status === 401) msg = 'API Key 无效';
+    if (resp.status === 429) msg = '请求过于频繁，请稍后再试';
+    throw new Error(msg);
+  }
+  const data = await resp.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('AI 返回内容为空');
+  return content;
+}
+
+// ─── 核心改动：通过自己的 Vercel 函数获取新闻，不再依赖第三方代理 ───
+async function fetchRssNews(statusBar) {
+  const query = RSS_QUERIES[currentCat] || 'world news today';
+  statusBar.innerHTML = '<span class="blink-dot"></span> 正在从服务器抓取新闻…';
+
+  // 调用自己部署的 Vercel 函数
+  const resp = await fetch('/api/news?q=' + encodeURIComponent(query));
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: '服务器错误 ' + resp.status }));
+    throw new Error(err.error || '服务器返回异常');
+  }
+  const data = await resp.json();
+  if (!data.items?.length) throw new Error('未获取到新闻数据');
+  return data.items;
+}
+
+// ─── FETCH ───
+async function fetchNews() {
+  if (isFetching) return;
+  if (!llmApiKey) { showToast('请先输入并保存 API Key'); document.getElementById('apiKeyInput').focus(); return; }
+
+  isFetching = true;
+  const statusBar = document.getElementById('statusBar');
+  document.querySelectorAll('.cat-tab').forEach(b => b.disabled = true);
+  statusBar.style.display = 'flex';
+  statusBar.innerHTML = '<span class="blink-dot"></span> 正在获取今日热点…';
+  showSkeletons();
+
+  try {
+    const articles = await fetchRssNews(statusBar);
+
+    const rawList = articles.map((a, i) =>
+      (i+1) + '. ' + a.title + '\n   摘要: ' + (a.description || '无') + '\n   来源: ' + (a.source || '未知')
+    ).join('\n\n');
+
+    statusBar.innerHTML = '<span class="blink-dot"></span> AI 正在整理新闻摘要…';
+
+    const prompt = '你是专业的国际新闻编辑。以下是今日热点新闻原始数据，请精选5条最重要的全球重大新闻，优先选择外交、地缘政治、重大经济政策、科技突破、重大事件等。\n\n'
+      + '对每条新闻：\n- title: 中文标题，30字以内（英文请翻译）\n- summary: 中文摘要，120字左右，含关键信息和背景\n\n'
+      + '只返回 JSON 数组 [{"title":"...","summary":"..."}]，不要其他文字。\n\n原始数据：\n' + rawList;
+
+    const fullText = await callLLM([
+      { role: 'system', content: '你是专业国际新闻编辑，擅长从全球视角筛选重大事件并用中文精炼概括。' },
+      { role: 'user', content: prompt }
+    ]);
+
+    let items = [];
+    const m = fullText.match(/\[[\s\S]*?\]/);
+    if (m) { try { items = JSON.parse(m[0]); } catch(_) {} }
+    if (!items.length) throw new Error('AI 返回内容解析失败，请重试');
+
+    renderCards(items);
+    statusBar.innerHTML = '<span style="color:#1e4d2b;font-weight:500;">✓ 已获取 ' + items.length + ' 条' + currentCat + '热点</span>&nbsp;&nbsp;更新于 ' + new Date().toLocaleTimeString('zh-CN');
+    showToast('成功获取 ' + items.length + ' 条热点');
+  } catch (err) {
+    statusBar.innerHTML = '<span style="color:#c0392b;">✗ ' + escapeHtml(err.message) + '</span>';
+    document.getElementById('newsContainer').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⚠️</div><h3>获取失败</h3><p>' + escapeHtml(err.message) + '</p></div>';
+    showToast(err.message, true);
+  } finally {
+    isFetching = false;
+    document.querySelectorAll('.cat-tab').forEach(b => b.disabled = false);
+  }
+}
+
+// ─── RENDER ───
+function renderCards(items) {
+  const now = new Date().toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' });
+  const dateStr = new Date().toLocaleDateString('zh-CN', { month:'long', day:'numeric' });
+  document.getElementById('dateLine').textContent = dateStr + ' · ' + currentCat + '版 · 共 ' + items.length + ' 条';
+  const cards = items.map((item, i) => {
+    const tagClass = 'tag-' + currentCat;
+    if (i === 0) return '<div class="news-card lead">'
+      + '<div><div class="card-tag ' + tagClass + '">' + currentCat + ' · 头条</div>'
+      + '<div class="card-title">' + escapeHtml(item.title) + '</div>'
+      + '<div class="card-footer"><span class="card-time">今日 ' + now + ' 更新</span></div></div>'
+      + '<div><div class="card-summary">' + escapeHtml(item.summary) + '</div>'
+      + '<div class="card-footer"><span class="card-time">NO.1</span>'
+      + '<button class="read-more" onclick="askDeep(0)">深度分析 →</button></div></div></div>';
+    return '<div class="news-card">'
+      + '<div class="card-tag ' + tagClass + '">' + currentCat + '</div>'
+      + '<div class="card-title">' + escapeHtml(item.title) + '</div>'
+      + '<div class="card-summary">' + escapeHtml(item.summary) + '</div>'
+      + '<div class="card-footer"><span class="card-time">今日 ' + now + ' · NO.' + (i+1) + '</span>'
+      + '<button class="read-more" onclick="askDeep(' + i + ')">深度分析 →</button></div></div>';
+  }).join('');
+  document.getElementById('newsContainer').innerHTML = '<div class="news-grid">' + cards + '</div>';
+  window._newsItems = items;
+}
+
+// ─── DEEP ANALYSIS ───
+async function askDeep(idx) {
+  const item = window._newsItems?.[idx];
+  if (!item || !llmApiKey) return;
+  showToast('正在生成深度分析…');
+  try {
+    const content = await callLLM([
+      { role: 'system', content: '你是资深国际新闻评论员，擅长深度分析全球重大事件。' },
+      { role: 'user', content: '请深度分析以下新闻，包括背景、影响、各方解读、未来走向，400字左右。\n\n标题：' + item.title + '\n\n内容：' + item.summary }
+    ], 800);
+    if (content) showAnalysisModal(item.title, content);
+  } catch(e) { showToast('分析失败：' + e.message, true); }
+}
+
+function showAnalysisModal(title, content) {
+  document.getElementById('analysisModal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'analysisModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(26,24,20,0.7);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = '<div style="background:var(--paper);max-width:640px;width:100%;max-height:80vh;overflow-y:auto;border:1px solid var(--ink);">'
+    + '<div style="padding:20px;border-bottom:2px solid var(--ink);display:flex;align-items:flex-start;gap:12px;">'
+    + '<div style="flex:1"><div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--ink-4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">深度分析</div>'
+    + '<div style="font-family:\'Noto Serif SC\',serif;font-size:16px;font-weight:700;color:var(--ink);line-height:1.4;">' + escapeHtml(title) + '</div></div>'
+    + '<button onclick="document.getElementById(\'analysisModal\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-3);padding:0;line-height:1;flex-shrink:0;">×</button></div>'
+    + '<div style="padding:20px;font-size:14px;line-height:1.9;color:var(--ink-2);font-family:\'Noto Sans SC\',sans-serif;font-weight:300;white-space:pre-wrap;">' + escapeHtml(content) + '</div></div>';
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+// ─── SKELETON ───
+function showSkeletons() {
+  const cards = [0,1,2,3,4].map((_, i) => i === 0
+    ? '<div class="skel-card news-card lead" style="border-top:3px solid var(--ink);">'
+      + '<div><div class="skel-tag skeleton-bg"></div>'
+      + '<div class="skel-h skeleton-bg" style="width:90%;height:24px;margin-top:8px;"></div>'
+      + '<div class="skel-h skeleton-bg" style="width:70%;height:24px;"></div></div>'
+      + '<div><div class="skel-p skeleton-bg" style="width:100%;"></div>'
+      + '<div class="skel-p skeleton-bg" style="width:95%;"></div>'
+      + '<div class="skel-p skeleton-bg" style="width:80%;"></div></div></div>'
+    : '<div class="skel-card news-card"><div class="skel-tag skeleton-bg" style="margin-bottom:10px;"></div>'
+      + '<div class="skel-h skeleton-bg" style="width:85%;height:18px;margin-bottom:6px;"></div>'
+      + '<div class="skel-h skeleton-bg" style="width:60%;height:18px;margin-bottom:12px;"></div>'
+      + '<div class="skel-p skeleton-bg" style="width:100%;"></div>'
+      + '<div class="skel-p skeleton-bg" style="width:90%;"></div>'
+      + '<div class="skel-p skeleton-bg" style="width:75%;"></div></div>'
+  ).join('');
+  document.getElementById('newsContainer').innerHTML = '<div class="news-grid">' + cards + '</div>';
+}
+
+// ─── TOAST / ESCAPE ───
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isErr ? '#c0392b' : 'var(--ink)';
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+</script>
+</body>
+</html>
